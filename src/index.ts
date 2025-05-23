@@ -1,4 +1,3 @@
-// index.ts
 interface IUser {
   id: number;
   name: string;
@@ -27,7 +26,7 @@ class Task implements ITask {
 
 class UserService {
   private users: User[] = [];
-  private lastUserId: number = 0;
+  private lastUserId = 0;
 
   createUser(name: string, email: string): User {
     const newUser = new User(++this.lastUserId, name, email);
@@ -44,16 +43,14 @@ class UserService {
   }
 
   deleteUser(id: number): void {
-    const index = this.users.findIndex(user => user.id === id);
-    if (index !== -1) {
-      this.users.splice(index, 1);
-    }
+    this.users = this.users.filter(user => user.id !== id);
   }
 }
 
 class TaskService {
   private tasks: Task[] = [];
-  private lastTaskId: number = 0;
+  private lastTaskId = 0;
+
   constructor(private userService: UserService) {}
 
   createTask(title: string, description: string): Task {
@@ -84,59 +81,122 @@ class TaskService {
   }
 
   deleteTask(id: number): void {
-    const index = this.tasks.findIndex(task => task.id === id);
-    if (index !== -1) {
-      this.tasks.splice(index, 1);
-    }
+    this.tasks = this.tasks.filter(task => task.id !== id);
   }
 }
-const createUserNameInput=document.getElementById('ceateUserName');
-const createUseremailInput=document.getElementById('createUserEmail');
-const createUserBtn=document.getElementById('createBtn');
-
-const getUserIdInput=document.getElementById('getUserId');
-const getUserBtn=document.getElementById('getUserId');
-
-const deleteUserIdInput=document.getElementById('deleteUserId');
-const deleteUserBtn=document.getElementById('deleteUserBtn');
-
-const assignTaskIdInput = document.getElementById('assignTaskId');
-const assignUserIdInput = document.getElementById('assignUserId');
-const assignTaskBtn = document.getElementById('assignTaskBtn');
-
-const userListDisplay = document.getElementById('userList');
-
-
-const createTaskTitleInput = document.getElementById('createTaskTitle');
-const createTaskDescriptionInput = document.getElementById('createTaskDescription');
-const createTaskBtn = document.getElementById('createTaskBtn');
-
-const unassignTaskIdInput = document.getElementById('unassignTaskId');
-const unassignTaskBtn = document.getElementById('unassignTaskBtn');
-
-const deleteTaskIdInput = document.getElementById('deleteTaskId');
-const deleteTaskBtn = document.getElementById('deleteTaskBtn');
-
-const taskListDisplay = document.getElementById('taskList');
-
 
 const userService = new UserService();
-const taskService = new TaskService(userService); 
+const taskService = new TaskService(userService);
 
+const createUserBtn = document.getElementById("createUserBtn") as HTMLButtonElement;
+const createUserNameInput = document.getElementById("createUserName") as HTMLInputElement;
+const createUserEmailInput = document.getElementById("createUserEmail") as HTMLInputElement;
+const deleteUserBtn = document.getElementById("deleteUserBtn") as HTMLButtonElement;
+const deleteUserIdInput = document.getElementById("deleteUserId") as HTMLInputElement;
+const assignTaskBtn = document.getElementById("assignTaskBtn") as HTMLButtonElement;
+const assignTaskIdInput = document.getElementById("assignTaskId") as HTMLInputElement;
+const assignUserIdInput = document.getElementById("assignUserId") as HTMLInputElement;
 
-function renderUsers() {
-    userListDisplay.innerHTML = ''; // Clear current list
-    const users = userService.getAllUsers();
-    if (users.length === 0) {
-        userListDisplay.innerHTML = '<li>No users created yet.</li>';
-        return;
-    }
-    users.forEach(user => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <span>ID: ${user.id}</span>
-            <strong>${user.name}</strong> (${user.email})
-        `;
-        userListDisplay.appendChild(li);
-    });
+const createTaskBtn = document.getElementById("createTaskBtn") as HTMLButtonElement;
+const createTaskTitleInput = document.getElementById("createTaskTitle") as HTMLInputElement;
+const createTaskDescriptionInput = document.getElementById("createTaskDescription") as HTMLInputElement;
+const unassignTaskBtn = document.getElementById("unassignTaskBtn") as HTMLButtonElement;
+const unassignTaskIdInput = document.getElementById("unassignTaskId") as HTMLInputElement;
+const deleteTaskBtn = document.getElementById("deleteTaskBtn") as HTMLButtonElement;
+const deleteTaskIdInput = document.getElementById("deleteTaskId") as HTMLInputElement;
+
+const userListDisplay = document.querySelector(".user-manager-section .display-area") as HTMLElement;
+const taskListDisplay = document.getElementById("taskList") as HTMLElement;
+
+function displayUserList(): void {
+  userListDisplay.innerHTML = "";
+  const users = userService.getAllUsers();
+  if (users.length === 0) {
+    userListDisplay.innerHTML = "<p>No users found.</p>";
+    return;
+  }
+
+  const ul = document.createElement("ul");
+  users.forEach(user => {
+    const li = document.createElement("li");
+    li.textContent = `ID: ${user.id}, Name: ${user.name}, Email: ${user.email}`;
+    ul.appendChild(li);
+  });
+  userListDisplay.appendChild(ul);
 }
+
+function displayTaskList(): void {
+  taskListDisplay.innerHTML = "";
+  const tasks = taskService.getAllTasks();
+  if (tasks.length === 0) {
+    taskListDisplay.innerHTML = "<li>No tasks found.</li>";
+    return;
+  }
+
+  tasks.forEach(task => {
+    const li = document.createElement("li");
+    li.textContent = `ID: ${task.id}, Title: ${task.title}, Description: ${task.description}, Assigned To: ${task.assignedTo ?? "None"}`;
+    taskListDisplay.appendChild(li);
+  });
+}
+
+createUserBtn.addEventListener("click", () => {
+  const name = createUserNameInput.value.trim();
+  const email = createUserEmailInput.value.trim();
+  if (name && email) {
+    userService.createUser(name, email);
+    createUserNameInput.value = "";
+    createUserEmailInput.value = "";
+    displayUserList();
+  }
+});
+
+deleteUserBtn.addEventListener("click", () => {
+  const id = parseInt(deleteUserIdInput.value);
+  if (!isNaN(id)) {
+    userService.deleteUser(id);
+    deleteUserIdInput.value = "";
+    displayUserList();
+    displayTaskList();
+  }
+});
+
+assignTaskBtn.addEventListener("click", () => {
+  const taskId = parseInt(assignTaskIdInput.value);
+  const userId = parseInt(assignUserIdInput.value);
+  if (!isNaN(taskId) && !isNaN(userId)) {
+    taskService.assignTask(taskId, userId);
+    displayTaskList();
+  }
+});
+
+createTaskBtn.addEventListener("click", () => {
+  const title = createTaskTitleInput.value.trim();
+  const description = createTaskDescriptionInput.value.trim();
+  if (title && description) {
+    taskService.createTask(title, description);
+    createTaskTitleInput.value = "";
+    createTaskDescriptionInput.value = "";
+    displayTaskList();
+  }
+});
+
+unassignTaskBtn.addEventListener("click", () => {
+  const taskId = parseInt(unassignTaskIdInput.value);
+  if (!isNaN(taskId)) {
+    taskService.unassignTask(taskId);
+    displayTaskList();
+  }
+});
+
+deleteTaskBtn.addEventListener("click", () => {
+  const id = parseInt(deleteTaskIdInput.value);
+  if (!isNaN(id)) {
+    taskService.deleteTask(id);
+    deleteTaskIdInput.value = "";
+    displayTaskList();
+  }
+});
+
+displayUserList();
+displayTaskList();
